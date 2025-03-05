@@ -1,4 +1,4 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.1
 Name: dantex
 Version: 0.1.0
 Summary: A module to download tasks and your accepted solutions from Dante platform at Technical University of Lodz
@@ -6,8 +6,4 @@ Author: MRajczyk
 Author-email: mikolajrajczyk01@gmail.com
 Requires-Python: >=3.7
 Requires-Dist: selenium
-Dynamic: author
-Dynamic: author-email
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
+Requires-Dist: python-dotenv

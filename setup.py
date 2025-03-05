@@ -9,7 +9,8 @@ setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
-        "selenium"
+        "selenium",
+        "python-dotenv"
     ],
     python_requires=">=3.7",
 )
