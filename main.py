@@ -11,8 +11,5 @@ if __name__ == "__main__":
     dantex = Dantex(email, password, webdriver.Chrome())
     dantex.export_all()
 
-    while True:
-        continue
-
 #build modulu lokalnie
 #pip install -e .

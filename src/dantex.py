@@ -38,11 +38,22 @@ class Dantex:
                 print("Something went wrong when trying to log in.")
                 exit()
 
+    def enable_disabled_buttons(self):
+        while True:
+            try:
+                topics_list_button = self.driver.find_element(By.XPATH, "//button[@disabled and normalize-space(text())='Lista tematów']")
+                self.driver.execute_script("arguments[0].removeAttribute('disabled');", topics_list_button)
+            except:
+                break
+
+
     def export_all(self):
         self.driver.get("https://dante.iis.p.lodz.pl/")
 
         if self.driver.current_url == "https://dante.iis.p.lodz.pl/#/auth/login":
             self.login_to_portal()
+
+        self.enable_disabled_buttons()
 
         input("Press enter to end...")
         self.driver.close()
