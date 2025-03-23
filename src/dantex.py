@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import time
+
 
 class Dantex:
     def __init__(self, email: str, password: str, driver):
@@ -24,7 +26,7 @@ class Dantex:
         # check if logged in correctly
         try:
             # Timeout of 5 seconds waiting for modal to show up
-            WebDriverWait(self.driver, 5).until(
+            WebDriverWait(self.driver, 3).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "modal-title"))
             )
 
@@ -38,13 +40,29 @@ class Dantex:
                 print("Something went wrong when trying to log in.")
                 exit()
 
-    def enable_disabled_buttons(self):
-        while True:
-            try:
-                topics_list_button = self.driver.find_element(By.XPATH, "//button[@disabled and normalize-space(text())='Lista tematów']")
-                self.driver.execute_script("arguments[0].removeAttribute('disabled');", topics_list_button)
-            except:
-                break
+
+    def enable_disabled_buttons_by_text(self, text):
+        self.enable_disabled_button_by_text(text)
+
+
+    def enable_disabled_button_by_text(self, text):
+        try:
+            topics_list_button = self.driver.find_element(By.XPATH,
+                                                          f"//button[@disabled and normalize-space(text())='{text}']")
+            self.driver.execute_script("arguments[0].removeAttribute('disabled');", topics_list_button)
+
+            return topics_list_button
+        except:
+            return None
+
+
+    def change_visited_button_text(self, text):
+        try:
+            topics_list_button = self.driver.find_element(By.XPATH,
+                                          f"//button[@disabled and normalize-space(text())='{text}']")
+            self.driver.execute_script("arguments[0].innerText = 'visited';", topics_list_button)
+        except:
+            return
 
 
     def export_all(self):
@@ -53,7 +71,31 @@ class Dantex:
         if self.driver.current_url == "https://dante.iis.p.lodz.pl/#/auth/login":
             self.login_to_portal()
 
-        self.enable_disabled_buttons()
+        # self.enable_disabled_buttons_by_text("Lista tematów")
+        courses_visited = 0
+        while True:
+            try:
+                # check if courses list is loaded
+                try:
+                    WebDriverWait(self.driver, 3).until(
+                        EC.presence_of_element_located((By.XPATH,
+                                                f"//button[@disabled and normalize-space(text())='Lista tematów']")))
+                except TimeoutException:
+                    print("Something went wrong when going back in the history stack")
+                    exit()
+                except Exception as e:
+                    print(e)
+
+                for i in range(0, courses_visited):
+                    self.change_visited_button_text("Lista tematów")
+                button = self.enable_disabled_button_by_text("Lista tematów")
+                button.click()
+                time.sleep(3)
+                self.driver.back()
+                courses_visited += 1
+            except Exception as e:
+                print(e)
+                break
 
         input("Press enter to end...")
         self.driver.close()
