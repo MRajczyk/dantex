@@ -69,7 +69,50 @@ class Dantex:
         except:
             return
 
+    def traverse_exercises(self):
+        # if "Raport główny" is actvice, go to report page and download submitted files as well as test files
+        EXERCISE_BUTTON_TEXT = "Wykonaj"
+        exercises_visited = 0
+        while True:
+            try:
+                # check if topic list is loaded
+                try:
+                    WebDriverWait(self.driver, 3).until(
+                        EC.presence_of_element_located((By.XPATH,
+                                                        f"//button[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")))
+                except TimeoutException:
+                    print(
+                        "Something went wrong when entering exercise {get and insert topic name (when bored enough)}")
+                    self.driver.back()
+                    continue
+                except Exception as e:
+                    print(e)
+                    exit()
+
+                for i in range(0, exercises_visited):
+                    self.change_enabled_visited_button_text(EXERCISE_BUTTON_TEXT)
+                button = self.driver.find_element(By.XPATH,
+                                                  f"//button[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")
+                button.click()
+
+                # go through exercises and scrape exercise content
+                self.save_exercise()
+
+                time.sleep(3)
+                self.driver.back()
+                exercises_visited += 1
+            except Exception as e:
+                print("Traversed all topics, going to a next course")
+                break
+        self.save_exercise()
+        return
+
+    def save_exercise(self):
+
+        return
+
     def traverse_topic_list(self):
+        TOPIC_BUTTON_TEXT = "Lista zadań"
         topics_visited = 0
         while True:
             try:
@@ -77,7 +120,7 @@ class Dantex:
                 try:
                     WebDriverWait(self.driver, 3).until(
                         EC.presence_of_element_located((By.XPATH,
-                                                        f"//button[normalize-space(text())='Lista zadań']")))
+                                                        f"//button[normalize-space(text())='{TOPIC_BUTTON_TEXT}']")))
                 except TimeoutException:
                     print("Something went wrong with loading exercise list for topic: {get and insert topic name (when bored enough)}")
                     self.driver.back()
@@ -87,14 +130,13 @@ class Dantex:
                     exit()
 
                 for i in range(0, topics_visited):
-                    self.change_enabled_visited_button_text("Lista zadań")
+                    self.change_enabled_visited_button_text(TOPIC_BUTTON_TEXT)
                 button = self.driver.find_element(By.XPATH,
-                                                    f"//button[normalize-space(text())='Lista zadań']")
+                                                    f"//button[normalize-space(text())='{TOPIC_BUTTON_TEXT}']")
                 button.click()
 
                 # go through exercises and scrape exercise content
-
-                # if "Raport główny" is actvice, go to report page and download submitted files as well as test files
+                self.traverse_exercises()
 
                 time.sleep(3)
                 self.driver.back()
@@ -110,6 +152,7 @@ class Dantex:
             self.login_to_portal()
 
         # self.enable_disabled_buttons_by_text("Lista tematów")
+        TOPICS_LIST_BUTTON_TEXT = "Lista tematów"
         courses_visited = 0
         while True:
             try:
@@ -117,7 +160,7 @@ class Dantex:
                 try:
                     WebDriverWait(self.driver, 3).until(
                         EC.presence_of_element_located((By.XPATH,
-                                                f"//button[@disabled and normalize-space(text())='Lista tematów']")))
+                                                f"//button[@disabled and normalize-space(text())='{TOPICS_LIST_BUTTON_TEXT}']")))
                 except TimeoutException:
                     print("Something went wrong when going back in the history stack")
                     exit()
@@ -125,8 +168,8 @@ class Dantex:
                     print(e)
 
                 for i in range(0, courses_visited):
-                    self.change_disabled_visited_button_text("Lista tematów")
-                button = self.enable_disabled_button_by_text("Lista tematów")
+                    self.change_disabled_visited_button_text(TOPICS_LIST_BUTTON_TEXT)
+                button = self.enable_disabled_button_by_text(TOPICS_LIST_BUTTON_TEXT)
                 button.click()
 
                 # go through topic list
