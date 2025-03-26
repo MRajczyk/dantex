@@ -168,6 +168,8 @@ class Dantex:
                 button.click()
 
                 # go through exercises and scrape exercise content
+                breadcrumb_texts = self.get_texts_from_breadcrumbs(4)
+                create_directory(breadcrumb_texts[1] + "/" + breadcrumb_texts[2])
                 self.traverse_exercises()
 
                 time.sleep(3)
