@@ -5,6 +5,20 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import time
+import os
+
+
+# UTILS, CAN BE MOVED TO ANOTHER SCRIPT FILE LATER #
+def create_directory(directory_name):
+    try:
+        os.makedirs("Dante export/" + directory_name)
+        print(f"Directory '{directory_name}' created successfully.")
+    except FileExistsError:
+        print(f"Directory '{directory_name}' already exists.")
+    except PermissionError:
+        print(f"Permission denied: Unable to create '{directory_name}'.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 class Dantex:
@@ -61,6 +75,14 @@ class Dantex:
         except:
             return
 
+    def change_enabled_visited_a_tag_text(self, text):
+        try:
+            topics_list_button = self.driver.find_element(By.XPATH,
+                                          f"//a[normalize-space(text())='{text}']")
+            self.driver.execute_script("arguments[0].innerText = 'visited';", topics_list_button)
+        except:
+            return
+
     def change_enabled_visited_button_text(self, text):
         try:
             topics_list_button = self.driver.find_element(By.XPATH,
@@ -68,6 +90,20 @@ class Dantex:
             self.driver.execute_script("arguments[0].innerText = 'visited';", topics_list_button)
         except:
             return
+
+    def get_texts_from_breadcrumbs(self, expected_breadcrumbs_arr_length):
+        try:
+            WebDriverWait(self.driver, 3).until(
+                lambda d: len(d.find_elements(By.CSS_SELECTOR, "ol.breadcrumb li a")) >= expected_breadcrumbs_arr_length
+            )
+        except TimeoutException:
+            print("Timed out when trying to get breadcrumbs.")
+            return
+
+        breadcrumb_items = self.driver.find_elements(By.CSS_SELECTOR, "ol.breadcrumb li a")
+        breadcrumb_texts = [item.text for item in breadcrumb_items]
+
+        return breadcrumb_texts
 
     def traverse_exercises(self):
         # if "Raport główny" is actvice, go to report page and download submitted files as well as test files
@@ -79,22 +115,19 @@ class Dantex:
                 try:
                     WebDriverWait(self.driver, 3).until(
                         EC.presence_of_element_located((By.XPATH,
-                                                        f"//button[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")))
+                                                        f"//a[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")))
                 except TimeoutException:
                     print(
                         "Something went wrong when entering exercise {get and insert topic name (when bored enough)}")
-                    self.driver.back()
-                    continue
+                    return
                 except Exception as e:
                     print(e)
                     exit()
-
                 for i in range(0, exercises_visited):
-                    self.change_enabled_visited_button_text(EXERCISE_BUTTON_TEXT)
+                    self.change_enabled_visited_a_tag_text(EXERCISE_BUTTON_TEXT)
                 button = self.driver.find_element(By.XPATH,
-                                                  f"//button[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")
+                                                  f"//a[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")
                 button.click()
-
                 # go through exercises and scrape exercise content
                 self.save_exercise()
 
@@ -102,14 +135,14 @@ class Dantex:
                 self.driver.back()
                 exercises_visited += 1
             except Exception as e:
+                # print(e)
                 print("Traversed all topics, going to a next course")
                 break
-        self.save_exercise()
         return
 
     def save_exercise(self):
-
-        return
+        breadcrumb_texts = self.get_texts_from_breadcrumbs(5)
+        print(breadcrumb_texts)
 
     def traverse_topic_list(self):
         TOPIC_BUTTON_TEXT = "Lista zadań"
@@ -123,8 +156,7 @@ class Dantex:
                                                         f"//button[normalize-space(text())='{TOPIC_BUTTON_TEXT}']")))
                 except TimeoutException:
                     print("Something went wrong with loading exercise list for topic: {get and insert topic name (when bored enough)}")
-                    self.driver.back()
-                    continue
+                    return
                 except Exception as e:
                     print(e)
                     exit()
@@ -154,6 +186,8 @@ class Dantex:
         # self.enable_disabled_buttons_by_text("Lista tematów")
         TOPICS_LIST_BUTTON_TEXT = "Lista tematów"
         courses_visited = 0
+
+        # go through courses
         while True:
             try:
                 # check if courses list is loaded
@@ -173,6 +207,8 @@ class Dantex:
                 button.click()
 
                 # go through topic list
+                breadcrumb_texts = self.get_texts_from_breadcrumbs(3)
+                create_directory(breadcrumb_texts[1])
                 self.traverse_topic_list()
 
                 time.sleep(3)
