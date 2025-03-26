@@ -2,3 +2,4 @@ venv
 .env
 .idea
 src/__pycache__
+Dante export
