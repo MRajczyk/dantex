@@ -8,6 +8,8 @@ import time
 import os
 
 
+TIMEOUT_CONSTANT_TIME_IN_SECONDS = 10
+
 # UTILS, CAN BE MOVED TO ANOTHER SCRIPT FILE LATER #
 def create_directory(directory_name):
     try:
@@ -19,6 +21,9 @@ def create_directory(directory_name):
         print(f"Permission denied: Unable to create '{directory_name}'.")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+def sanitize_filename_part(filename):
+    return filename.replace("/", "⁄").replace(":", "-")
 
 
 class Dantex:
@@ -40,7 +45,7 @@ class Dantex:
         # check if logged in correctly
         try:
             # Timeout of 5 seconds waiting for modal to show up
-            WebDriverWait(self.driver, 3).until(
+            WebDriverWait(self.driver, TIMEOUT_CONSTANT_TIME_IN_SECONDS).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "modal-title"))
             )
 
@@ -93,7 +98,7 @@ class Dantex:
 
     def get_texts_from_breadcrumbs(self, expected_breadcrumbs_arr_length):
         try:
-            WebDriverWait(self.driver, 3).until(
+            WebDriverWait(self.driver, TIMEOUT_CONSTANT_TIME_IN_SECONDS).until(
                 lambda d: len(d.find_elements(By.CSS_SELECTOR, "ol.breadcrumb li a")) >= expected_breadcrumbs_arr_length
             )
         except TimeoutException:
@@ -113,7 +118,7 @@ class Dantex:
             try:
                 # check if topic list is loaded
                 try:
-                    WebDriverWait(self.driver, 3).until(
+                    WebDriverWait(self.driver, TIMEOUT_CONSTANT_TIME_IN_SECONDS).until(
                         EC.presence_of_element_located((By.XPATH,
                                                         f"//a[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")))
                 except TimeoutException:
@@ -134,19 +139,24 @@ class Dantex:
                 time.sleep(3)
                 self.driver.back()
                 exercises_visited += 1
+            except NoSuchElementException:
+                print("Traversed all exercises, going to a next course")
+                break
             except Exception as e:
-                # print(e)
-                print("Traversed all topics, going to a next course")
+                print(e)
                 break
         return
 
     def save_exercise(self):
         breadcrumb_texts = self.get_texts_from_breadcrumbs(5)
+        print(breadcrumb_texts)
+        print("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + sanitize_filename_part(breadcrumb_texts[3]) + ".html")
 
-        with open("Dante export/" + breadcrumb_texts[1] + "/" + breadcrumb_texts[2] + "/" + breadcrumb_texts[3] + ".html", "w") as f:
+        with open("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + sanitize_filename_part(breadcrumb_texts[3]) + ".html", "w", encoding="utf-8") as f:
             f.write("<html>")
             exercise_contents = self.driver.find_element(By.ID, "taskwindow")
-            f.write(exercise_contents.get_attribute("outerHTML"))
+            contents = exercise_contents.get_attribute("outerHTML")
+            f.write(contents)
             f.write("</html>")
 
     def traverse_topic_list(self):
@@ -156,7 +166,7 @@ class Dantex:
             try:
                 # check if topic list is loaded
                 try:
-                    WebDriverWait(self.driver, 3).until(
+                    WebDriverWait(self.driver, TIMEOUT_CONSTANT_TIME_IN_SECONDS).until(
                         EC.presence_of_element_located((By.XPATH,
                                                         f"//button[normalize-space(text())='{TOPIC_BUTTON_TEXT}']")))
                 except TimeoutException:
@@ -174,7 +184,7 @@ class Dantex:
 
                 # go through exercises and scrape exercise content
                 breadcrumb_texts = self.get_texts_from_breadcrumbs(4)
-                create_directory(breadcrumb_texts[1] + "/" + breadcrumb_texts[2])
+                create_directory(sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]))
                 self.traverse_exercises()
 
                 time.sleep(3)
@@ -199,7 +209,7 @@ class Dantex:
             try:
                 # check if courses list is loaded
                 try:
-                    WebDriverWait(self.driver, 3).until(
+                    WebDriverWait(self.driver, TIMEOUT_CONSTANT_TIME_IN_SECONDS).until(
                         EC.presence_of_element_located((By.XPATH,
                                                 f"//button[@disabled and normalize-space(text())='{TOPICS_LIST_BUTTON_TEXT}']")))
                 except TimeoutException:
@@ -215,7 +225,7 @@ class Dantex:
 
                 # go through topic list
                 breadcrumb_texts = self.get_texts_from_breadcrumbs(3)
-                create_directory(breadcrumb_texts[1])
+                create_directory(sanitize_filename_part(breadcrumb_texts[1]))
                 self.traverse_topic_list()
 
                 time.sleep(3)
