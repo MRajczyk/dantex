@@ -135,9 +135,9 @@ class Dantex:
                                                   f"//a[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")
                 button.click()
                 # go through exercises and scrape exercise content
-                self.save_exercise()
+                self.save_exercise(exercises_visited + 1)
 
-                time.sleep(3)
+                # time.sleep(3)
                 self.driver.back()
                 exercises_visited += 1
             except NoSuchElementException:
@@ -148,12 +148,13 @@ class Dantex:
                 break
         return
 
-    def save_exercise(self):
+    def save_exercise(self, exercise_number):
         breadcrumb_texts = self.get_texts_from_breadcrumbs(5)
-        print(breadcrumb_texts)
-        print("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + sanitize_filename_part(breadcrumb_texts[3]) + ".html")
+        #debug
+        #print(breadcrumb_texts)
+        #print("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + sanitize_filename_part(breadcrumb_texts[3]) + ".html")
 
-        with open("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + sanitize_filename_part(breadcrumb_texts[3]) + ".html", "w", encoding="utf-8") as f:
+        with open("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + str(exercise_number) + ". " + sanitize_filename_part(breadcrumb_texts[3]) + ".html", "w", encoding="utf-8") as f:
             f.write("<html>")
             exercise_contents = self.driver.find_element(By.ID, "taskwindow")
             contents = exercise_contents.get_attribute("outerHTML")
@@ -188,7 +189,7 @@ class Dantex:
                 create_directory(sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]))
                 self.traverse_exercises()
 
-                time.sleep(3)
+                # time.sleep(3)
                 self.driver.back()
                 topics_visited += 1
             except Exception as e:
@@ -229,7 +230,7 @@ class Dantex:
                 create_directory(sanitize_filename_part(breadcrumb_texts[1]))
                 self.traverse_topic_list()
 
-                time.sleep(3)
+                # time.sleep(3)
                 self.driver.back()
                 courses_visited += 1
             except Exception as e:
