@@ -142,7 +142,12 @@ class Dantex:
 
     def save_exercise(self):
         breadcrumb_texts = self.get_texts_from_breadcrumbs(5)
-        print(breadcrumb_texts)
+
+        with open("Dante export/" + breadcrumb_texts[1] + "/" + breadcrumb_texts[2] + "/" + breadcrumb_texts[3] + ".html", "w") as f:
+            f.write("<html>")
+            exercise_contents = self.driver.find_element(By.ID, "taskwindow")
+            f.write(exercise_contents.get_attribute("outerHTML"))
+            f.write("</html>")
 
     def traverse_topic_list(self):
         TOPIC_BUTTON_TEXT = "Lista zadań"
