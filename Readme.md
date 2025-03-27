@@ -7,7 +7,7 @@
 
 ## Requirements
 - After cloning the code you can install the package locally by running "pip install -e ."
-- main.py script is provided, to work correctly it requires a .env file with a following structure:
+- main.py script is provided, to work correctly it requires an .env file with a following structure:
 
 DANTE_EMAIL=\<your email><br/>
 DANTE_PASSWORD=\<your password>
