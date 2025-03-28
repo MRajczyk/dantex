@@ -12,5 +12,8 @@
 DANTE_EMAIL=\<your email><br/>
 DANTE_PASSWORD=\<your password>
 
+## Results:
+![image](https://github.com/user-attachments/assets/38f0e1cf-1701-4c9f-acf7-cf7e899b8131)
+
 ## I encourage to read the following article: 
 https://www.researchgate.net/publication/327000430_Dante_-_Automated_Assessments_Tool_for_Students'_Programming_Assignments
