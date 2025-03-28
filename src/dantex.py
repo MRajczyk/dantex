@@ -210,7 +210,7 @@ class Dantex:
 
     def traverse_topic_list(self):
         TOPIC_BUTTON_TEXT = "Lista zadań"
-        topics_visited = 0
+        topics_visited = 12
         while True:
             try:
                 # check if topic list is loaded
@@ -251,7 +251,7 @@ class Dantex:
 
         # self.enable_disabled_buttons_by_text("Lista tematów")
         TOPICS_LIST_BUTTON_TEXT = "Lista tematów"
-        courses_visited = 0
+        courses_visited = 3
 
         # go through courses
         while True:
