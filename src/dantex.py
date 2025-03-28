@@ -33,7 +33,11 @@ def change_download_directory(driver, folder_path):
     folder_abs = os.path.abspath(folder_path)
     params = {"behavior": "allow", "downloadPath": folder_abs}
     driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
-    print(f"Folder pobierania zmieniony na: {folder_abs}")
+    print(f"Folder changed to: {folder_abs}")
+    # pesky nondeterminism, sometimes fails - saves to a default Downloads folder
+    # problem now may have something to do with proceeding before download is finished (not tested yet)
+    # TODO: work out a permanent fix
+    time.sleep(0.5)
 
 
 class Dantex:
@@ -157,21 +161,34 @@ class Dantex:
                 break
         return
 
-    def get_report_files_if_present(self, exercise_name):
-        button = self.driver.find_element(By.XPATH,
-                                          f"//a[normalize-space(text())='Raport główny']")
-        if "disabled" not in button.get_attribute("class"):
-            button.click()
-            time.sleep(2)
-
-            # this is sketchy and dubious, but works, so stays for now :)
-            windows = self.driver.window_handles
-            previous_window = windows[0]
-            self.driver.switch_to.window(windows[1])
-            self.driver.close()
-            self.driver.switch_to.window(previous_window)
-        else:
-            print(f"Brak przesłanej odpowiedzi do zadania {exercise_name}")
+    def get_report_files_if_present(self, exercise_name, exercise_folder_path):
+        try:
+            button = self.driver.find_element(By.XPATH,
+                                              f"//a[normalize-space(text())='Raport główny']")
+            previous_window = self.driver.window_handles[0]
+            if "disabled" not in button.get_attribute("class"):
+                button.click()
+                # TODO: REMOVE NONDETERMINISM
+                time.sleep(2)
+                self.driver.switch_to.window(self.driver.window_handles[1])
+                try:
+                    sources_download_tag = self.driver.find_element(By.XPATH,
+                                                      f"//a[normalize-space(text())='source.zip']")
+                    change_download_directory(self.driver, exercise_folder_path)
+                    sources_download_tag.click()
+                except TimeoutException:
+                    print("Błąd przy próbie pobrania przesłanego kodu źródłowego")
+                finally:
+                    # closing the tab regardless of saving results
+                    # this is sketchy and dubious, but works, so stays for now :)
+                    self.driver.close()
+                    self.driver.switch_to.window(previous_window)
+            else:
+                print(f"Brak przesłanej odpowiedzi do zadania {exercise_name}")
+        except TimeoutException:
+            print("Błąd przy próbie pobrania raportu")
+        except Exception as e:
+            print(e)
 
     def save_exercise(self, topic_number, exercise_number):
         breadcrumb_texts = self.get_texts_from_breadcrumbs(5)
@@ -188,7 +205,8 @@ class Dantex:
             contents = exercise_contents.get_attribute("outerHTML")
             f.write(contents)
             f.write("</html>")
-            self.get_report_files_if_present(sanitize_filename_part(breadcrumb_texts[3]))
+            self.get_report_files_if_present(sanitize_filename_part(breadcrumb_texts[3]), "Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + str(topic_number) + ". " + sanitize_filename_part(breadcrumb_texts[2])
+                         + "/" + str(exercise_number) + ". " + sanitize_filename_part(breadcrumb_texts[3]))
 
     def traverse_topic_list(self):
         TOPIC_BUTTON_TEXT = "Lista zadań"
