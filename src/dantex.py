@@ -11,6 +11,7 @@ import re
 
 TIMEOUT_CONSTANT_TIME_IN_SECONDS = 10
 
+
 # UTILS, CAN BE MOVED TO ANOTHER SCRIPT FILE LATER #
 def create_directory(directory_name):
     try:
@@ -23,8 +24,16 @@ def create_directory(directory_name):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+
 def sanitize_filename_part(filename):
     return re.sub(r'[\\*?"<>|]', "_", filename.replace("/", "⁄").replace(":", "-"))
+
+
+def change_download_directory(driver, folder_path):
+    folder_abs = os.path.abspath(folder_path)
+    params = {"behavior": "allow", "downloadPath": folder_abs}
+    driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
+    print(f"Folder pobierania zmieniony na: {folder_abs}")
 
 
 class Dantex:
@@ -111,7 +120,7 @@ class Dantex:
 
         return breadcrumb_texts
 
-    def traverse_exercises(self):
+    def traverse_exercises(self, topic_number):
         # if "Raport główny" is actvice, go to report page and download submitted files as well as test files
         EXERCISE_BUTTON_TEXT = "Wykonaj"
         exercises_visited = 0
@@ -135,7 +144,7 @@ class Dantex:
                                                   f"//a[normalize-space(text())='{EXERCISE_BUTTON_TEXT}']")
                 button.click()
                 # go through exercises and scrape exercise content
-                self.save_exercise(exercises_visited + 1)
+                self.save_exercise(topic_number, exercises_visited + 1)
 
                 # time.sleep(3)
                 self.driver.back()
@@ -148,18 +157,38 @@ class Dantex:
                 break
         return
 
-    def save_exercise(self, exercise_number):
-        breadcrumb_texts = self.get_texts_from_breadcrumbs(5)
-        #debug
-        #print(breadcrumb_texts)
-        #print("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + sanitize_filename_part(breadcrumb_texts[3]) + ".html")
+    def get_report_files_if_present(self, exercise_name):
+        button = self.driver.find_element(By.XPATH,
+                                          f"//a[normalize-space(text())='Raport główny']")
+        if "disabled" not in button.get_attribute("class"):
+            button.click()
+            time.sleep(2)
 
-        with open("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + str(exercise_number) + ". " + sanitize_filename_part(breadcrumb_texts[3]) + ".html", "w", encoding="utf-8") as f:
+            # this is sketchy and dubious, but works, so stays for now :)
+            windows = self.driver.window_handles
+            previous_window = windows[0]
+            self.driver.switch_to.window(windows[1])
+            self.driver.close()
+            self.driver.switch_to.window(previous_window)
+        else:
+            print(f"Brak przesłanej odpowiedzi do zadania {exercise_name}")
+
+    def save_exercise(self, topic_number, exercise_number):
+        breadcrumb_texts = self.get_texts_from_breadcrumbs(5)
+        # debug
+        # print(breadcrumb_texts)
+        # print("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]) + "/" + sanitize_filename_part(breadcrumb_texts[3]) + ".html")
+        create_directory(sanitize_filename_part(breadcrumb_texts[1]) + "/" + str(topic_number) + ". " + sanitize_filename_part(breadcrumb_texts[2])
+                         + "/" + str(exercise_number) + ". " + sanitize_filename_part(breadcrumb_texts[3]))
+        with open("Dante export/" + sanitize_filename_part(breadcrumb_texts[1]) + "/" + str(topic_number) + ". " + sanitize_filename_part(breadcrumb_texts[2])
+                  + "/" + str(exercise_number) + ". " + sanitize_filename_part(breadcrumb_texts[3]) + "/"
+                  + sanitize_filename_part(breadcrumb_texts[3]) + ".html", "w", encoding="utf-8") as f:
             f.write("<html>")
             exercise_contents = self.driver.find_element(By.ID, "taskwindow")
             contents = exercise_contents.get_attribute("outerHTML")
             f.write(contents)
             f.write("</html>")
+            self.get_report_files_if_present(sanitize_filename_part(breadcrumb_texts[3]))
 
     def traverse_topic_list(self):
         TOPIC_BUTTON_TEXT = "Lista zadań"
@@ -186,8 +215,8 @@ class Dantex:
 
                 # go through exercises and scrape exercise content
                 breadcrumb_texts = self.get_texts_from_breadcrumbs(4)
-                create_directory(sanitize_filename_part(breadcrumb_texts[1]) + "/" + sanitize_filename_part(breadcrumb_texts[2]))
-                self.traverse_exercises()
+                create_directory(sanitize_filename_part(breadcrumb_texts[1]) + "/" + str(topics_visited + 1) + ". " + sanitize_filename_part(breadcrumb_texts[2]))
+                self.traverse_exercises(topics_visited + 1)
 
                 # time.sleep(3)
                 self.driver.back()
