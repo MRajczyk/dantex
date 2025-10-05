@@ -73,8 +73,9 @@ class Dantex:
                 print("Something went wrong when trying to log in.")
                 exit()
 
-    def enable_disabled_buttons_by_text(self, text):
-        self.enable_disabled_button_by_text(text)
+    # TODO: implement
+    # def enable_disabled_buttons_by_text(self, text):
+    #     self.enable_disabled_button_by_text(text)
 
     def enable_disabled_button_by_text(self, text):
         try:
@@ -210,7 +211,7 @@ class Dantex:
 
     def traverse_topic_list(self):
         TOPIC_BUTTON_TEXT = "Lista zadań"
-        topics_visited = 12
+        topics_visited = 0
         while True:
             try:
                 # check if topic list is loaded
@@ -251,7 +252,7 @@ class Dantex:
 
         # self.enable_disabled_buttons_by_text("Lista tematów")
         TOPICS_LIST_BUTTON_TEXT = "Lista tematów"
-        courses_visited = 3
+        courses_visited = 0
 
         # go through courses
         while True:
@@ -270,6 +271,9 @@ class Dantex:
                 for i in range(0, courses_visited):
                     self.change_disabled_visited_button_text(TOPICS_LIST_BUTTON_TEXT)
                 button = self.enable_disabled_button_by_text(TOPICS_LIST_BUTTON_TEXT)
+                if button == None:
+                    print("Export complete")
+                    exit(0)
                 button.click()
 
                 # go through topic list
